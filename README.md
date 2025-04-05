@@ -20,6 +20,6 @@ This is a Java-based implementation of the Huffman coding algorithm for file com
    compessed: compressed.txt
    retreive: retreived.txt
 
-![Screenshot of compression](images/compression.png)
-![Screenshot of decompression](images/decompression.png)
+![Screenshot of compression](compression.png)
+![Screenshot of decompression](decompression.png)
 
