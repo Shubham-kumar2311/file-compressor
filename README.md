@@ -19,3 +19,7 @@ This is a Java-based implementation of the Huffman coding algorithm for file com
 4. src: text.txt
    compessed: compressed.txt
    retreive: retreived.txt
+
+![Screenshot of compression](images/compression.png)
+![Screenshot of decompression](images/decompression.png)
+
