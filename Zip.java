@@ -26,20 +26,36 @@ public class Zip {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Enter source file path:");
-        String sourceFile = scanner.nextLine();
+        System.out.println("Choose an option:");
+        System.out.println("1. Compress a file");
+        System.out.println("2. Decompress a file");
+        System.out.print("Enter your choice (1 or 2): ");
         
-        System.out.println("Enter compressed file path:");
-        String compressedFile = scanner.nextLine();
-        
-        System.out.println("Enter decompressed file path:");
-        String decompressedFile = scanner.nextLine();
+        String choice = scanner.nextLine();
 
         try {
-            compress(sourceFile, compressedFile);
-            System.out.println("Compression completed successfully.");
-            decompress(compressedFile, decompressedFile);
-            System.out.println("Decompression completed successfully.");
+            switch (choice) {
+                case "1":
+                    System.out.println("Enter source file path:");
+                    String sourceFile = scanner.nextLine();
+                    System.out.println("Enter compressed file path:");
+                    String compressedFile = scanner.nextLine();
+                    long[] sizes = compress(sourceFile, compressedFile);
+                    System.out.println("Compression completed successfully.");
+                    double percentReduction = ((double)(sizes[0] - sizes[1]) / sizes[0]) * 100;
+                    System.out.printf("File size reduced by %.2f%%\n", percentReduction);
+                    break;
+                case "2":
+                    System.out.println("Enter compressed file path:");
+                    String compressedFileForDecomp = scanner.nextLine();
+                    System.out.println("Enter decompressed file path:");
+                    String decompressedFile = scanner.nextLine();
+                    decompress(compressedFileForDecomp, decompressedFile);
+                    System.out.println("Decompression completed successfully.");
+                    break;
+                default:
+                    System.out.println("Invalid choice. Please enter 1 or 2.");
+            }
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("Error: " + e.getMessage());
             e.printStackTrace();
@@ -48,11 +64,14 @@ public class Zip {
         }
     }
 
-    public static void compress(String src, String des) throws IOException {
+    public static long[] compress(String src, String des) throws IOException {
         File file = new File(src);
         if (!file.exists()) {
             throw new IOException("Source file does not exist");
         }
+
+        long originalSize;
+        long compressedSize;
 
         try (FileInputStream inputStream = new FileInputStream(src);
              FileOutputStream outputStream = new FileOutputStream(des);
@@ -60,13 +79,18 @@ public class Zip {
             
             byte[] b = new byte[(int) file.length()];
             inputStream.read(b);
+            originalSize = file.length();
             byte[] outputData = createZip(b);
             
-            // Write the length of original data first
             objectOutputStream.writeInt(b.length);
             objectOutputStream.writeObject(outputData);
             objectOutputStream.writeObject(chart);
+            
+            objectOutputStream.flush();
+            compressedSize = new File(des).length();
         }
+
+        return new long[]{originalSize, compressedSize};
     }
 
     public static byte[] createZip(byte[] b) {
@@ -125,7 +149,7 @@ public class Zip {
                 list.add(b);
                 i += ct;
             } else {
-                break; // Stop at invalid data instead of throwing exception
+                break;
             }
         }
 
@@ -137,7 +161,7 @@ public class Zip {
     }
 
     static String convertByteToBit(byte b) {
-        int curByte = b & 0xFF;  // Convert to unsigned
+        int curByte = b & 0xFF;
         return String.format("%8s", Integer.toBinaryString(curByte)).replace(' ', '0');
     }
 
@@ -193,25 +217,25 @@ public class Zip {
 
     static byte[] outputArray(byte[] bytes, HashMap<Byte, String> hash) {
         StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            String code = hash.get(b);
-            if (code != null) {
-                sb.append(code);
+            for (byte b : bytes) {
+                String code = hash.get(b);
+                if (code != null) {
+                    sb.append(code);
+                }
             }
-        }
 
-        int length = (sb.length() + 7) / 8;
-        byte[] output = new byte[length];
-        
-        for (int i = 0; i < length; i++) {
-            int start = i * 8;
-            int end = Math.min(start + 8, sb.length());
-            String chunk = sb.substring(start, end);
-            if (chunk.length() < 8) {
-                chunk = String.format("%-8s", chunk).replace(' ', '0');
+            int length = (sb.length() + 7) / 8;
+            byte[] output = new byte[length];
+            
+            for (int i = 0; i < length; i++) {
+                int start = i * 8;
+                int end = Math.min(start + 8, sb.length());
+                String chunk = sb.substring(start, end);
+                if (chunk.length() < 8) {
+                    chunk = String.format("%-8s", chunk).replace(' ', '0');
+                }
+                output[i] = (byte) Integer.parseInt(chunk, 2);
             }
-            output[i] = (byte) Integer.parseInt(chunk, 2);
-        }
-        return output;
+            return output;
     }
 }
